@@ -2,6 +2,7 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TMUX_COPY_MODE=""
+TMUX_BEGIN_SELECTION_KEY=""
 
 REMOTE_SHELL_WAIT_TIME="0.4"
 
@@ -10,6 +11,12 @@ source "$CURRENT_DIR/key_binding_helpers.sh"
 # sets a TMUX_COPY_MODE that is used as a global variable
 get_tmux_copy_mode() {
 	TMUX_COPY_MODE="$(tmux show-option -gwv mode-keys)"
+}
+
+# sets a TMUX_BEGIN_SELECTION_KEY that is used as a global variable
+# TMUX_COPY_MODE needs to be set before calling this function
+get_tmux_begin_selection_key() {
+	TMUX_BEGIN_SELECTION_KEY="$(tmux list-keys -t ${TMUX_COPY_MODE}-copy | grep "begin-selection" | awk '{print $4}')"
 }
 
 # The command when on ssh with latency. To make it work in this case too,
@@ -31,13 +38,7 @@ enter_tmux_copy_mode() {
 }
 
 start_tmux_selection() {
-	if [ "$TMUX_COPY_MODE" == "vi" ]; then
-		# vi copy mode
-		tmux send-key 'Space'
-	else
-		# emacs copy mode
-		tmux send-key 'C-Space'
-	fi
+	tmux send-key "${TMUX_BEGIN_SELECTION_KEY}"
 }
 
 # works when command spans accross multiple lines
@@ -86,6 +87,7 @@ yank_current_line() {
 
 main() {
 	get_tmux_copy_mode
+	get_tmux_begin_selection_key
 	yank_current_line
 }
 main
